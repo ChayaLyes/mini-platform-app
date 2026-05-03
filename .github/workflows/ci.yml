@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/mini-platform-app
+  IMAGE_NAME: chayalyes/mini-platform-app
 
 jobs:
   # === Job 1 : Lint Helm ===
@@ -60,7 +60,7 @@ jobs:
             type=sha,prefix=,format=short
             type=raw,value=latest
 
-      - name: Build image (no push yet)
+      - name: Build image (load locally for scan)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -103,7 +103,12 @@ jobs:
           cd gitops
           NEW_TAG="${{ needs.build-and-push.outputs.image-tag }}"
           echo "Updating tag to $NEW_TAG"
-          sed -i "s|tag: \".*\"|tag: \"$NEW_TAG\"|" apps/mini-platform-app/values.yaml || true
+          if [ -f apps/mini-platform-app/values.yaml ]; then
+            sed -i "s|tag: \".*\"|tag: \"$NEW_TAG\"|" apps/mini-platform-app/values.yaml
+          else
+            echo "values.yaml not found yet (gitops repo not bootstrapped) — skipping"
+            exit 0
+          fi
 
       - name: Commit & push
         run: |
