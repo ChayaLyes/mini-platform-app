@@ -1,0 +1,48 @@
+# === IMAGE DOCKER ===
+# D'où vient l'image qu'on veut faire tourner
+replicaCount: 1
+
+image:
+  repository: ghcr.io/chayalyes/mini-platform-app
+  pullPolicy: IfNotPresent
+  tag: "dev"
+
+# === SERVICE (réseau interne du cluster) ===
+# Comment les autres pods peuvent joindre l'app
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# === INGRESS (URL publique) ===
+# L'adresse depuis l'extérieur du cluster
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: app.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# === RESSOURCES (limites CPU / RAM) ===
+# Évite que l'app bouffe toute la VM
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# === HEALTH CHECKS ===
+# Kubernetes vérifie que l'app répond bien
+probes:
+  enabled: true
+  path: /health
+
+# === SÉCURITÉ ===
+# Lance le conteneur sans privilèges root
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
